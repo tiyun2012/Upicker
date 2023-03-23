@@ -29,6 +29,8 @@ class GridGraphicsView(QGraphicsView):
                 painter.drawLine(*line)
 
         super().drawBackground(painter, rect)
+    def set_background_color(self, color):
+        self.setBackgroundBrush(color)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -53,12 +55,15 @@ class MainWindow(QMainWindow):
 
         self.zoom_out_action = QAction("Zoom Out", self)
         self.zoom_out_action.triggered.connect(self.zoom_out)
+        self.bg_color_action = QAction("Background Color", self)
+        self.bg_color_action.triggered.connect(self.select_bg_color)
 
     def init_menu(self):
-        view_menu = self.menuBar().addMenu("View")
+        view_menu = self.menuBar().addMenu("options")
         view_menu.addAction(self.toggle_grid_action)
         view_menu.addAction(self.zoom_in_action)
         view_menu.addAction(self.zoom_out_action)
+        view_menu.addAction(self.bg_color_action)
 
     def init_toolbox(self):
         grid_toolbox = QGroupBox("Grid Options")
@@ -110,6 +115,10 @@ class MainWindow(QMainWindow):
         self.view.grid_thickness = value
         self.view.viewport().update()
 
+    def select_bg_color(self):
+        color = QColorDialog.getColor(initial=self.view.backgroundBrush().color(), parent=self, title="Select Background Color")
+        if color.isValid():
+            self.view.set_background_color(color)
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
