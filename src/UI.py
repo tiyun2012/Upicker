@@ -1,15 +1,12 @@
 import sys
-from PySide2.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QMainWindow, QAction, QColorDialog
-from PySide2.QtGui import QPainter, QPen, QColor, QIcon
+from PySide2.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsItem, QMainWindow, QAction, QGridLayout
+from PySide2.QtGui import QPainter, QPen, QColor
 from PySide2.QtCore import Qt
 
 class GridGraphicsView(QGraphicsView):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.grid_enabled = True
-        self.grid_color = QColor(0, 0, 0, 125)
-
-
 
     def drawBackground(self, painter, rect):
         if self.grid_enabled:
@@ -23,7 +20,7 @@ class GridGraphicsView(QGraphicsView):
             for y in range(top, int(rect.bottom()), grid_size):
                 lines.append((rect.left(), y, rect.right(), y))
 
-            grid_pen = QPen(self.grid_color)
+            grid_pen = QPen(QColor(200, 200, 255, 125))
             painter.setPen(grid_pen)
             for line in lines:
                 painter.drawLine(*line)
@@ -34,7 +31,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowIcon(QIcon('./pictures/upicker.png'))
         self.view = GridGraphicsView(self)
         self.scene = QGraphicsScene(self)
 
@@ -54,42 +50,21 @@ class MainWindow(QMainWindow):
         self.zoom_out_action = QAction("Zoom Out", self)
         self.zoom_out_action.triggered.connect(self.zoom_out)
 
-        self.select_bg_color_action = QAction("Select Background Color", self)
-        self.select_bg_color_action.triggered.connect(self.select_bg_color)
-
     def init_menu(self):
         view_menu = self.menuBar().addMenu("View")
         view_menu.addAction(self.toggle_grid_action)
         view_menu.addAction(self.zoom_in_action)
         view_menu.addAction(self.zoom_out_action)
-        view_menu.addAction(self.select_bg_color_action)
 
-
+    def toggle_grid(self):
+        self.view.grid_enabled = not self.view.grid_enabled
+        self.view.viewport().update()
 
     def zoom_in(self):
         self.view.setTransform(self.view.transform().scale(1.2, 1.2))
 
     def zoom_out(self):
         self.view.setTransform(self.view.transform().scale(1 / 1.2, 1 / 1.2))
-
-    def toggle_grid(self):
-        self.view.grid_enabled = not self.view.grid_enabled
-        self.view.update()
-
-    def update_grid_color(self, background_color):
-        if background_color.lightness() > 128:
-            self.grid_color = QColor(0, 0, 0, 125)
-        else:
-            self.grid_color = QColor(255, 255, 255, 125)
-        self.update()
-
-    def select_bg_color(self):
-        color = QColorDialog.getColor()
-        if color.isValid():
-            self.view.setBackgroundBrush(color)
-            self.view.update_grid_color(color)
-            self.view.update()
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
