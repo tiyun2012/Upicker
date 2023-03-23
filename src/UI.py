@@ -11,7 +11,7 @@ class GridGraphicsView(QGraphicsView):
         self.grid_color = QColor(200, 200, 255, 125)
         self.grid_thickness = 1
 
-    def drawBackground(self, painter, rect):
+    def drawForeground(self, painter, rect):
         if self.grid_enabled:
             grid_size = 20
             left = int(rect.left()) - (int(rect.left()) % grid_size)
@@ -28,9 +28,11 @@ class GridGraphicsView(QGraphicsView):
             for line in lines:
                 painter.drawLine(*line)
 
-        super().drawBackground(painter, rect)
+        super().drawForeground(painter, rect)
+
     def set_background_color(self, color):
         self.setBackgroundBrush(color)
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
