@@ -1,5 +1,5 @@
 import sys
-from PySide2.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsItem, QMainWindow, QAction, QGridLayout
+from PySide2.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QMainWindow, QAction, QColorDialog, QInputDialog
 from PySide2.QtGui import QPainter, QPen, QColor
 from PySide2.QtCore import Qt
 
@@ -7,6 +7,8 @@ class GridGraphicsView(QGraphicsView):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.grid_enabled = True
+        self.grid_color = QColor(200, 200, 255, 125)
+        self.grid_thickness = 1
 
     def drawBackground(self, painter, rect):
         if self.grid_enabled:
@@ -20,7 +22,7 @@ class GridGraphicsView(QGraphicsView):
             for y in range(top, int(rect.bottom()), grid_size):
                 lines.append((rect.left(), y, rect.right(), y))
 
-            grid_pen = QPen(QColor(200, 200, 255, 125))
+            grid_pen = QPen(self.grid_color, self.grid_thickness, Qt.SolidLine)
             painter.setPen(grid_pen)
             for line in lines:
                 painter.drawLine(*line)
@@ -50,11 +52,19 @@ class MainWindow(QMainWindow):
         self.zoom_out_action = QAction("Zoom Out", self)
         self.zoom_out_action.triggered.connect(self.zoom_out)
 
+        self.select_grid_color_action = QAction("Select Grid Color", self)
+        self.select_grid_color_action.triggered.connect(self.select_grid_color)
+
+        self.set_grid_thickness_action = QAction("Set Grid Thickness", self)
+        self.set_grid_thickness_action.triggered.connect(self.set_grid_thickness)
+
     def init_menu(self):
         view_menu = self.menuBar().addMenu("View")
         view_menu.addAction(self.toggle_grid_action)
         view_menu.addAction(self.zoom_in_action)
         view_menu.addAction(self.zoom_out_action)
+        view_menu.addAction(self.select_grid_color_action)
+        view_menu.addAction(self.set_grid_thickness_action)
 
     def toggle_grid(self):
         self.view.grid_enabled = not self.view.grid_enabled
@@ -65,6 +75,23 @@ class MainWindow(QMainWindow):
 
     def zoom_out(self):
         self.view.setTransform(self.view.transform().scale(1 / 1.2, 1 / 1.2))
+
+    def select_grid_color(self):
+        color = QColorDialog.getColor(initial=self.view.grid_color, parent=self, title="Select Grid Color")
+        if color.isValid():
+            self.view.grid_color = color
+            self.view.viewport().update()
+
+    def set_grid_thickness(self):
+        thickness, ok = QInputDialog.getInt(
+            self, "Set Grid Thickness", "Enter grid line thickness:",
+            value=self.view.grid_thickness, min=1, max=10
+        )
+        if ok:
+            self.view.grid_thickness = thickness
+            self.view.viewport().update()
+
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
