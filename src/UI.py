@@ -1,7 +1,8 @@
 import sys
 from PySide2.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QMainWindow, QAction, QColorDialog, QInputDialog
 from PySide2.QtGui import QPainter, QPen, QColor
-from PySide2.QtCore import Qt
+from PySide2.QtCore import Qt,QEvent
+
 
 class GridGraphicsView(QGraphicsView):
     def __init__(self, parent=None):
@@ -28,6 +29,12 @@ class GridGraphicsView(QGraphicsView):
                 painter.drawLine(*line)
 
         super().drawBackground(painter, rect)
+    def event(self, event):
+        if event.type() == GridPropertiesChangeEvent.EVENT_TYPE:
+            self.viewport().update()
+            return True
+
+        return super().event(event)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -91,6 +98,12 @@ class MainWindow(QMainWindow):
             self.view.grid_thickness = thickness
             self.view.viewport().update()
 
+
+class GridPropertiesChangeEvent(QEvent):
+    EVENT_TYPE = QEvent.Type(QEvent.registerEventType())
+
+    def __init__(self):
+        super().__init__(GridPropertiesChangeEvent.EVENT_TYPE)
 
 
 if __name__ == "__main__":
