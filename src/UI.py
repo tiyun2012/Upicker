@@ -1,8 +1,8 @@
 import sys
-from PySide2.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QMainWindow, QAction, QColorDialog, QInputDialog
+from PySide2.QtWidgets import (QApplication, QGraphicsView, QGraphicsScene, QMainWindow, QAction, QColorDialog, QInputDialog,
+                               QVBoxLayout, QLabel, QPushButton, QSpinBox, QGroupBox, QWidget, QToolBar)
 from PySide2.QtGui import QPainter, QPen, QColor
-from PySide2.QtCore import Qt,QEvent
-
+from PySide2.QtCore import Qt
 
 class GridGraphicsView(QGraphicsView):
     def __init__(self, parent=None):
@@ -29,12 +29,6 @@ class GridGraphicsView(QGraphicsView):
                 painter.drawLine(*line)
 
         super().drawBackground(painter, rect)
-    def event(self, event):
-        if event.type() == GridPropertiesChangeEvent.EVENT_TYPE:
-            self.viewport().update()
-            return True
-
-        return super().event(event)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -48,6 +42,7 @@ class MainWindow(QMainWindow):
 
         self.init_actions()
         self.init_menu()
+        self.init_toolbox()
 
     def init_actions(self):
         self.toggle_grid_action = QAction("Toggle Grid", self)
@@ -59,19 +54,41 @@ class MainWindow(QMainWindow):
         self.zoom_out_action = QAction("Zoom Out", self)
         self.zoom_out_action.triggered.connect(self.zoom_out)
 
-        self.select_grid_color_action = QAction("Select Grid Color", self)
-        self.select_grid_color_action.triggered.connect(self.select_grid_color)
-
-        self.set_grid_thickness_action = QAction("Set Grid Thickness", self)
-        self.set_grid_thickness_action.triggered.connect(self.set_grid_thickness)
-
     def init_menu(self):
         view_menu = self.menuBar().addMenu("View")
         view_menu.addAction(self.toggle_grid_action)
         view_menu.addAction(self.zoom_in_action)
         view_menu.addAction(self.zoom_out_action)
-        view_menu.addAction(self.select_grid_color_action)
-        view_menu.addAction(self.set_grid_thickness_action)
+
+    def init_toolbox(self):
+        grid_toolbox = QGroupBox("Grid Options")
+        layout = QVBoxLayout()
+
+        grid_color_label = QLabel("Grid Color:")
+        layout.addWidget(grid_color_label)
+
+        grid_color_button = QPushButton("Select Grid Color")
+        grid_color_button.clicked.connect(self.select_grid_color)
+        layout.addWidget(grid_color_button)
+
+        grid_thickness_label = QLabel("Grid Thickness:")
+        layout.addWidget(grid_thickness_label)
+
+        grid_thickness_spinbox = QSpinBox()
+        grid_thickness_spinbox.setRange(1, 10)
+        grid_thickness_spinbox.setValue(self.view.grid_thickness)
+        grid_thickness_spinbox.valueChanged.connect(self.set_grid_thickness)
+        layout.addWidget(grid_thickness_spinbox)
+
+        grid_toolbox.setLayout(layout)
+
+        self.create_tool_bar(grid_toolbox)
+
+    def create_tool_bar(self, widget):
+        tool_bar = QToolBar(self)
+        tool_bar.addWidget(widget)
+        self.addToolBar(Qt.RightToolBarArea, tool_bar)
+
 
     def toggle_grid(self):
         self.view.grid_enabled = not self.view.grid_enabled
@@ -89,22 +106,9 @@ class MainWindow(QMainWindow):
             self.view.grid_color = color
             self.view.viewport().update()
 
-    def set_grid_thickness(self):
-        thickness, ok = QInputDialog.getInt(
-            self, "Set Grid Thickness", "Enter grid line thickness:",
-            value=self.view.grid_thickness, min=1, max=10
-        )
-        if ok:
-            self.view.grid_thickness = thickness
-            self.view.viewport().update()
-
-
-class GridPropertiesChangeEvent(QEvent):
-    EVENT_TYPE = QEvent.Type(QEvent.registerEventType())
-
-    def __init__(self):
-        super().__init__(GridPropertiesChangeEvent.EVENT_TYPE)
-
+    def set_grid_thickness(self, value):
+        self.view.grid_thickness = value
+        self.view.viewport().update()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
