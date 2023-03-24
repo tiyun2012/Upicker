@@ -6,6 +6,8 @@ from PySide2.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QGrap
 class GraphicsView(QGraphicsView):
     def __init__(self, background_color=Qt.white, grid_color=QColor(230, 230, 230)):
         super().__init__()
+        # Set the sceneRect to the desired size
+        
 
         self.background_color = background_color
         self.grid_color = grid_color
@@ -13,7 +15,8 @@ class GraphicsView(QGraphicsView):
         # Set up the scene
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
-
+        # Set the sceneRect to the desired size
+        self.scene.setSceneRect(0, 0, 10000, 10000)
         self.grid_item = self.create_grid_item(1000, 1000, 50)
         self.scene.addItem(self.grid_item)
 
