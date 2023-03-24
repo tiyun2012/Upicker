@@ -1,10 +1,14 @@
+import sys
 from PySide2.QtCore import Qt, QPointF
 from PySide2.QtGui import QPen, QColor, QPainterPath
 from PySide2.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QGraphicsPathItem
 
 class GraphicsView(QGraphicsView):
-    def __init__(self):
+    def __init__(self, background_color=Qt.white, grid_color=QColor(230, 230, 230)):
         super().__init__()
+
+        self.background_color = background_color
+        self.grid_color = grid_color
 
         # Set up the scene
         self.scene = QGraphicsScene(self)
@@ -14,11 +18,12 @@ class GraphicsView(QGraphicsView):
         self.scene.addItem(self.grid_item)
 
         self.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.setBackgroundBrush(QColor(self.background_color))
 
     def create_grid_item(self, width, height, spacing):
         item = QGraphicsPathItem()
-        pen = QPen(QColor(255, 0, 0))  # Set the pen color to red
-        pen.setWidth(3)  # Increase the pen width
+        pen = QPen(self.grid_color)
+        pen.setWidth(1)
         item.setPen(pen)
 
         path = QPainterPath()
@@ -34,10 +39,8 @@ class GraphicsView(QGraphicsView):
         item.setPath(path)
 
         return item
-
-
 if __name__ == '__main__':
     app = QApplication([])
-    view = GraphicsView()
+    view = GraphicsView(background_color=QColor(0, 0, 0), grid_color=QColor(230, 230, 230))
     view.show()
-    app.exec_()
+    sys.exit(app.exec_())
