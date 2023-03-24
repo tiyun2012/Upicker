@@ -1,5 +1,5 @@
 import sys
-from PySide2.QtCore import Qt, QPointF
+from PySide2.QtCore import Qt, QPointF,QPoint
 from PySide2.QtGui import QPen, QColor, QPainterPath, QPainter
 from PySide2.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QGraphicsPathItem
 
@@ -9,7 +9,7 @@ class GraphicsView(QGraphicsView):
 
         self.background_color = background_color
         self.grid_color = grid_color
-
+        
         # Set up the scene
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
@@ -31,10 +31,9 @@ class GraphicsView(QGraphicsView):
         self.setOptimizationFlag(QGraphicsView.DontAdjustForAntialiasing, True)
         self.setOptimizationFlag(QGraphicsView.DontSavePainterState, True)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
-        self.setDragMode(QGraphicsView.ScrollHandDrag)
 
         self._pan = False
-        self._pan_start = QPointF()
+        self.pan_start = QPoint(100,100)
 
     def create_grid_item(self, width, height, spacing):
         item = QGraphicsPathItem()
@@ -66,8 +65,9 @@ class GraphicsView(QGraphicsView):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
+            self.setDragMode(QGraphicsView.ScrollHandDrag)
             self._pan = True
-            self._pan_start = event.pos()
+            self.pan_start = event.pos()
             self.setCursor(Qt.ClosedHandCursor)
             event.accept()
         else:
@@ -75,10 +75,10 @@ class GraphicsView(QGraphicsView):
 
     def mouseMoveEvent(self, event):
         if self._pan:
-            delta = self.mapToScene(event.pos()) - self.mapToScene(self._pan_start)
+            delta = self.mapToScene(event.pos()) - self.mapToScene(self.pan_start)
             self.setTransformationAnchor(QGraphicsView.NoAnchor)
             self.translate(delta.x(), delta.y())
-            self._pan_start = event.pos
+            self.pan_start = event.pos()
             event.accept()
         else:
             super().mouseMoveEvent(event)
@@ -90,7 +90,6 @@ class GraphicsView(QGraphicsView):
             event.accept()
         else:
             super().mouseReleaseEvent(event)
-
 if __name__ == '__main__':
     app = QApplication([])
     view = GraphicsView(background_color=QColor(0, 0, 0), grid_color=QColor(230, 230, 230))
