@@ -10,6 +10,8 @@ class GridGraphicsView(QGraphicsView):
         self.grid_enabled = True
         self.grid_color = QColor(200, 200, 255, 125)
         self.grid_thickness = 1
+        self.pan_enabled = False
+        self.last_pos = None
 
     def drawForeground(self, painter, rect):
         if self.grid_enabled:
@@ -33,6 +35,31 @@ class GridGraphicsView(QGraphicsView):
     def set_background_color(self, color):
         self.setBackgroundBrush(color)
 
+    def mousePressEvent(self, event):
+        if event.modifiers() == Qt.ControlModifier and event.buttons() == Qt.RightButton:
+            self.pan_enabled = True
+            self.last_pos = event.pos()
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self.pan_enabled:
+            delta = self.last_pos - event.pos()
+            self.last_pos = event.pos()
+            self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + delta.x())
+            self.verticalScrollBar().setValue(self.verticalScrollBar().value() + delta.y())
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self.pan_enabled:
+            self.pan_enabled = False
+            event.accept()
+        else:
+            super().mouseReleaseEvent(event)
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -47,7 +74,7 @@ class MainWindow(QMainWindow):
         self.init_actions()
         self.init_menu()
         self.init_toolbox()
-
+        self.pan_start_pos = None
     def init_actions(self):
         self.toggle_grid_action = QAction("Toggle Grid", self)
         self.toggle_grid_action.triggered.connect(self.toggle_grid)
@@ -89,6 +116,9 @@ class MainWindow(QMainWindow):
 
         grid_toolbox.setLayout(layout)
 
+
+        # pan
+
         self.create_tool_bar(grid_toolbox)
 
     def create_tool_bar(self, widget):
@@ -102,7 +132,8 @@ class MainWindow(QMainWindow):
         self.view.viewport().update()
 
     def zoom_in(self):
-        self.view.setTransform(self.view.transform().scale(1.2, 1.2))
+        # self.view.setTransform(self.view.transform().scale(1.2, 1.2))
+        self.view.setTransform(self.view.transform().translate(2,0))
 
     def zoom_out(self):
         self.view.setTransform(self.view.transform().scale(1 / 1.2, 1 / 1.2))
@@ -121,6 +152,8 @@ class MainWindow(QMainWindow):
         color = QColorDialog.getColor(initial=self.view.backgroundBrush().color(), parent=self, title="Select Background Color")
         if color.isValid():
             self.view.set_background_color(color)
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 

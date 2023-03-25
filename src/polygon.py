@@ -1,6 +1,6 @@
 import sys
 from math import sin, cos, pi
-from PySide2.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QGraphicsPolygonItem, QGraphicsItem, QVBoxLayout, QWidget, QSlider
+from PySide2.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QGraphicsPolygonItem, QGraphicsItem, QVBoxLayout, QWidget, QSlider, QMainWindow, QScrollArea
 from PySide2.QtCore import QPointF, QRectF, Qt
 from PySide2.QtGui import QPolygonF, QBrush, QColor, QPainter
 
@@ -26,56 +26,57 @@ class StarPolygonItem(QGraphicsPolygonItem):
         self.num_points = num_points
         self.update_polygon()
 
-def on_slider_value_changed(value):
-    star_item.set_num_points(value)
-    star_item.update_polygon()
+
+class CustomGraphicsScene(QGraphicsScene):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setSceneRect(QRectF(0, 0, 2000, 2000))
+
+        self.star_item = StarPolygonItem()
+        self.star_item.setPos(1000, 1000)
+        self.star_item.setBrush(QBrush(QColor("blue")))
+        self.star_item.setFlag(QGraphicsItem.ItemIsMovable)
+        self.star_item.setFlag(QGraphicsItem.ItemIsSelectable)
+
+        self.addItem(self.star_item)
 
 
-class CustomGraphicsView(QGraphicsView):
-    def __init__(self, scene, parent=None):
-        super().__init__(scene, parent)
+class MainWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
-    def wheelEvent(self, event):
-        zoom_factor = 1.15
-        if event.angleDelta().y() > 0:
-            # Zoom in
-            self.scale(zoom_factor, zoom_factor)
-        else:
-            # Zoom out
-            self.scale(1 / zoom_factor, 1 / zoom_factor)
+        self.scene = CustomGraphicsScene()
+        self.view = QGraphicsView(self.scene)
+        self.view.setRenderHint(QPainter.Antialiasing)
+        self.view.setOptimizationFlag(QGraphicsView.DontAdjustForAntialiasing, True)
+
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidget(self.view)
+
+        self.slider = QSlider(Qt.Horizontal)
+        self.slider.setMinimum(3)
+        self.slider.setMaximum(20)
+        self.slider.setValue(5)
+        self.slider.valueChanged.connect(self.on_slider_value_changed)
+
+        central_widget = QWidget()
+        layout = QVBoxLayout()
+        layout.addWidget(self.scroll_area)
+        layout.addWidget(self.slider)
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
+
+        self.setWindowTitle("Star Polygon Example")
+
+    def on_slider_value_changed(self, value):
+        self.scene.star_item.set_num_points(value)
+        self.scene.star_item.update_polygon()
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    scene = QGraphicsScene(QRectF(0, 0, 2000, 2000))
-
-    star_item = StarPolygonItem()
-    star_item.setPos(1000, 1000)
-    star_item.setBrush(QBrush(QColor("blue")))
-    star_item.setFlag(QGraphicsItem.ItemIsMovable)
-    star_item.setFlag(QGraphicsItem.ItemIsSelectable)
-
-    scene.addItem(star_item)
-
-    view = CustomGraphicsView(scene)
-    view.setRenderHint(QPainter.Antialiasing)
-    view.setOptimizationFlag(QGraphicsView.DontAdjustForAntialiasing, True)
-    view.setSceneRect(scene.sceneRect())
-
-    slider = QSlider(Qt.Horizontal)
-    slider.setMinimum(3)
-    slider.setMaximum(20)
-    slider.setValue(5)
-    slider.valueChanged.connect(on_slider_value_changed)
-
-    layout = QVBoxLayout()
-    layout.addWidget(view)
-    layout.addWidget(slider)
-
-    container = QWidget()
-    container.setLayout(layout)
-    container.setWindowTitle("Star Polygon Example")
-    container.show()
+    main_window = MainWindow()
+    main_window.show()
 
     sys.exit(app.exec_())
