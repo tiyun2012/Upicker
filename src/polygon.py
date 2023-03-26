@@ -41,14 +41,19 @@ class CustomGraphicsScene(QGraphicsScene):
         self.addItem(self.star_item)
 
 
+class CustomGraphicsView(QGraphicsView):
+    def __init__(self, scene, parent=None):
+        super().__init__(scene, parent)
+        self.setRenderHint(QPainter.Antialiasing)
+        self.setOptimizationFlag(QGraphicsView.DontAdjustForAntialiasing, True)
+
+
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self.scene = CustomGraphicsScene()
-        self.view = QGraphicsView(self.scene)
-        self.view.setRenderHint(QPainter.Antialiasing)
-        self.view.setOptimizationFlag(QGraphicsView.DontAdjustForAntialiasing, True)
+        self.view = CustomGraphicsView(self.scene)
 
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidget(self.view)
