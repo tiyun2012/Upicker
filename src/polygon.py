@@ -1,6 +1,7 @@
 import sys
 from math import sin, cos, pi
-from PySide2.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QGraphicsPolygonItem, QGraphicsItem, QVBoxLayout, QWidget, QSlider, QMainWindow, QScrollArea
+from PySide2.QtWidgets import (QApplication, QGraphicsScene, QGraphicsView, QGraphicsPolygonItem, QGraphicsItem, QVBoxLayout, QWidget
+                                ,QSlider, QMainWindow, QScrollArea,QSpinBox)
 from PySide2.QtCore import QPointF, QRectF, Qt
 from PySide2.QtGui import QPolygonF, QBrush, QColor, QPainter
 
@@ -46,8 +47,13 @@ class CustomGraphicsView(QGraphicsView):
         super().__init__(scene, parent)
         self.setRenderHint(QPainter.Antialiasing)
         self.setOptimizationFlag(QGraphicsView.DontAdjustForAntialiasing, True)
+class StarSpinBox(QSpinBox):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-
+    def stepBy(self, steps):
+        super().stepBy(steps)
+        print("hello")
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -58,26 +64,26 @@ class MainWindow(QMainWindow):
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidget(self.view)
 
-        self.slider = QSlider(Qt.Horizontal)
-        self.slider.setMinimum(3)
-        self.slider.setMaximum(20)
-        self.slider.setValue(5)
-        self.slider.valueChanged.connect(self.on_slider_value_changed)
-
+        
         central_widget = QWidget()
         layout = QVBoxLayout()
         layout.addWidget(self.scroll_area)
-        layout.addWidget(self.slider)
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
-
         self.setWindowTitle("Star Polygon Example")
+        #  attaching Star SpinBox to MainWindow
+        self.init_star_spinbox()
+        layout.addWidget(self.Star_spinBox)
 
-    def on_slider_value_changed(self, value):
+    def on_Star_spinBox_value_changed(self, value):
         self.scene.star_item.set_num_points(value)
-        self.scene.star_item.update_polygon()
 
-
+    def init_star_spinbox(self):
+        self.Star_spinBox = QSpinBox()
+        self.Star_spinBox.setMinimum(3)
+        self.Star_spinBox.setMaximum(20)
+        self.Star_spinBox.setValue(5)
+        self.Star_spinBox.valueChanged.connect(self.on_Star_spinBox_value_changed)
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
