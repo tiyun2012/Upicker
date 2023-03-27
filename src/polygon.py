@@ -1,17 +1,22 @@
+
 import sys
 from math import sin, cos, pi
 from PySide2.QtWidgets import (QApplication, QGraphicsScene, QGraphicsView, QGraphicsPolygonItem, QGraphicsItem, QVBoxLayout, QWidget
                                 ,QSlider, QMainWindow, QScrollArea,QSpinBox)
 from PySide2.QtCore import QPointF, QRectF, Qt
-from PySide2.QtGui import QPolygonF, QBrush, QColor, QPainter
+from PySide2.QtGui import QPolygonF, QBrush, QColor, QPainter, QPen
 
 
 class StarPolygonItem(QGraphicsPolygonItem):
     def __init__(self, num_points=5, radius=50):
         self.num_points = num_points
         self.radius = radius
+        self.edge_color = QColor("transparent")
         super().__init__()
         self.update_polygon()
+        self.setBrush(QBrush(QColor("blue")))
+        self.setAcceptHoverEvents(True)  # Enable hover events
+        self.setFlag(QGraphicsItem.ItemSendsScenePositionChanges, True)  # Enable position change notifications
 
     def update_polygon(self):
         star_polygon = QPolygonF()
@@ -26,6 +31,40 @@ class StarPolygonItem(QGraphicsPolygonItem):
     def set_num_points(self, num_points):
         self.num_points = num_points
         self.update_polygon()
+
+    def paint(self, painter, option, widget=None):
+        super().paint(painter, option, widget)
+        painter.setRenderHint(QPainter.Antialiasing)
+        pen = QPen(self.edge_color)
+        pen.setWidth(3)
+        painter.setPen(pen)
+        polyline = self.polygon()
+        polyline.append(polyline.at(0))
+        painter.drawPolyline(polyline)
+
+    def hoverEnterEvent(self, event):
+        self.edge_color = QColor("green")
+        self.update()
+        super().hoverEnterEvent(event)
+
+    def hoverLeaveEvent(self, event):
+        self.edge_color = QColor("transparent") if not self.isSelected() else QColor("red")
+        self.update()
+        super().hoverLeaveEvent(event)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemSelectedChange:
+            self.edge_color = QColor("red") if value else QColor("transparent")
+        elif change == QGraphicsItem.ItemPositionChange:
+            print(f"Polygon position: {value}")
+        return super().itemChange(change, value)
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        print(f"Polygon position: {self.pos()}")   
+
+
+
+# The rest of the code remains unchanged.
 
 
 class CustomGraphicsScene(QGraphicsScene):
