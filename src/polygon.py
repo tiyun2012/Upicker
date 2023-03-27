@@ -2,8 +2,8 @@
 import sys
 from math import sin, cos, pi
 from PySide2.QtWidgets import (QApplication, QGraphicsScene, QGraphicsView, QGraphicsPolygonItem, QGraphicsItem, QVBoxLayout, QWidget
-                                ,QSlider, QMainWindow, QScrollArea,QSpinBox)
-from PySide2.QtCore import QPointF, QRectF, Qt
+                                ,QSlider, QMainWindow, QScrollArea,QSpinBox,QGraphicsRectItem)
+from PySide2.QtCore import QPointF, QRectF, Qt,QRectF,QSizeF
 from PySide2.QtGui import QPolygonF, QBrush, QColor, QPainter, QPen
 
 
@@ -36,7 +36,7 @@ class StarPolygonItem(QGraphicsPolygonItem):
         super().paint(painter, option, widget)
         painter.setRenderHint(QPainter.Antialiasing)
         pen = QPen(self.edge_color)
-        pen.setWidth(3)
+        pen.setWidth(2)
         painter.setPen(pen)
         polyline = self.polygon()
         polyline.append(polyline.at(0))
@@ -54,7 +54,7 @@ class StarPolygonItem(QGraphicsPolygonItem):
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemSelectedChange:
-            self.edge_color = QColor("red") if value else QColor("transparent")
+            self.edge_color = QColor("yellow") if value else QColor("transparent")
         elif change == QGraphicsItem.ItemPositionChange:
             print(f"Polygon position: {value}")
         return super().itemChange(change, value)
@@ -78,6 +78,12 @@ class CustomGraphicsScene(QGraphicsScene):
         self.star_item.setFlag(QGraphicsItem.ItemIsMovable)
         self.star_item.setFlag(QGraphicsItem.ItemIsSelectable)
 
+        self._StartItem2 = StarPolygonItem()
+        self._StartItem2.setPos(1200, 1000)
+        self._StartItem2.setBrush(QBrush(QColor("blue")))
+        self._StartItem2.setFlag(QGraphicsItem.ItemIsMovable)
+        self._StartItem2.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.addItem(self._StartItem2)
         self.addItem(self.star_item)
 
 
@@ -86,6 +92,18 @@ class CustomGraphicsView(QGraphicsView):
         super().__init__(scene, parent)
         self.setRenderHint(QPainter.Antialiasing)
         self.setOptimizationFlag(QGraphicsView.DontAdjustForAntialiasing, True)
+        self.setDragMode(QGraphicsView.RubberBandDrag)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.rubberBandRect = QRectF(event.pos(), QSizeF())
+            self.setRubberBandSelectionMode(Qt.IntersectsItemBoundingRect)
+            self.rubberBandRectItem = QGraphicsRectItem(self.rubberBandRect)
+            self.rubberBandRectItem.setPen(QPen(Qt.DashLine))
+            self.scene().addItem(self.rubberBandRectItem)
+        super().mousePressEvent(event)
+
+
 class StarSpinBox(QSpinBox):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
