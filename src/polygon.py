@@ -72,21 +72,17 @@ class CustomGraphicsScene(QGraphicsScene):
         super().__init__(parent)
         self.setSceneRect(QRectF(0, 0, 2000, 2000))
 
-        self.star_item = StarPolygonItem()
-        self.star_item.setPos(1000, 1000)
-        self.star_item.setBrush(QBrush(QColor("blue")))
-        self.star_item.setFlag(QGraphicsItem.ItemIsMovable)
-        self.star_item.setFlag(QGraphicsItem.ItemIsSelectable)
 
-        self._StartItem2 = StarPolygonItem()
-        self._StartItem2.setPos(1200, 1000)
-        self._StartItem2.setBrush(QBrush(QColor("blue")))
-        self._StartItem2.setFlag(QGraphicsItem.ItemIsMovable)
-        self._StartItem2.setFlag(QGraphicsItem.ItemIsSelectable)
-        self.addItem(self._StartItem2)
-        self.addItem(self.star_item)
-
-
+        self.addItem(self.add_star_polygon_item(1000,1000))
+        self.addItem(self.add_star_polygon_item(1000,1200))
+    def add_star_polygon_item(self, x, y, brush_color="blue", is_movable=True, is_selectable=True):
+        item = StarPolygonItem()
+        item.setPos(x, y)
+        item.setBrush(QBrush(QColor(brush_color)))
+        item.setFlag(QGraphicsItem.ItemIsMovable, is_movable)
+        item.setFlag(QGraphicsItem.ItemIsSelectable, is_selectable)
+        self.addItem(item)
+        return item
 class CustomGraphicsView(QGraphicsView):
     def __init__(self, scene, parent=None):
         super().__init__(scene, parent)
