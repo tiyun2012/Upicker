@@ -1,110 +1,197 @@
+
 import sys
-from PySide2.QtCore import Qt, QMimeData, QPointF
-from PySide2.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsItem, QLabel
-from PySide2.QtGui import QPolygonF, QDrag, QPixmap, QPainter, QColor, QPen, QBrush
+from math import sin, cos, pi
+from PySide2.QtWidgets import (QApplication, QGraphicsScene, QGraphicsView, QGraphicsPolygonItem, QGraphicsItem, QVBoxLayout, QWidget
+                                ,QStyleOptionGraphicsItem, QMainWindow, QScrollArea,QSpinBox,QGraphicsRectItem,QStyle
+                                ,QMenu,QDialog,QPushButton,QAction )
+from PySide2.QtCore import QPointF, QRectF, Qt,QRectF,QSizeF,QPoint
+from PySide2.QtGui import QPolygonF, QBrush, QColor, QPainter, QPen
 
-class DraggablePolygon(QGraphicsItem):
-    def __init__(self, polygon, parent=None):
-        super(DraggablePolygon, self).__init__(parent)
-        self.polygon = polygon
-        self.setFlag(QGraphicsItem.ItemIsMovable)
 
-    def boundingRect(self):
-        return self.polygon.boundingRect()
+class PolygonItems(QGraphicsPolygonItem):
+    def __init__(self, num_points=5, radius=50):
+        self.num_points = num_points
+        self.radius = radius
+        self.edge_color = QColor("transparent")
+        super().__init__()
+        self.update_polygon()
+        self.setBrush(QBrush(QColor("blue")))
+        self.setAcceptHoverEvents(True)  # Enable hover events
+        self.setFlag(QGraphicsItem.ItemSendsScenePositionChanges, True)  # Enable position change notifications
 
-    def paint(self, painter, option, widget):
-        painter.setPen(QPen(Qt.black))
-        painter.setBrush(QBrush(Qt.red))
-        painter.drawPolygon(self.polygon)
+    def update_polygon(self):
+        star_polygon = QPolygonF()
+        for i in range(self.num_points * 2):
+            factor = 1.0 if i % 2 == 0 else 0.5
+            angle = (2 * pi * i) / (self.num_points * 2)
+            x = self.radius * factor * cos(angle)
+            y = self.radius * factor * sin(angle)
+            star_polygon.append(QPointF(x, y))
+        self.setPolygon(star_polygon)
+  
+    def set_num_points(self, num_points):
+        self.num_points = num_points
+        self.update_polygon()
+
+    def paint(self, painter, option, widget=None):
+        # Create a new QStyleOptionGraphicsItem without the QStyle.State_Selected flag
+        no_selection_option = QStyleOptionGraphicsItem(option)
+        no_selection_option.state &= ~QStyle.State_Selected
+
+        super().paint(painter, no_selection_option, widget)
+        painter.setRenderHint(QPainter.Antialiasing)
+        pen = QPen(self.edge_color)
+        pen.setWidth(2)
+        painter.setPen(pen)
+        polyline = self.polygon()
+        polyline.append(polyline.at(0))
+        painter.drawPolyline(polyline)
+
+    def hoverEnterEvent(self, event):
+        self.edge_color = QColor("green")
+        self.update()
+        super().hoverEnterEvent(event)
+
+    def hoverLeaveEvent(self, event):
+        self.edge_color = QColor("transparent") if not self.isSelected() else QColor("red")
+        self.update()
+        super().hoverLeaveEvent(event)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemSelectedChange:
+            self.edge_color = QColor("yellow") if value else QColor("transparent")
+        elif change == QGraphicsItem.ItemPositionChange:
+            print(f"Polygon position: {value}")
+        return super().itemChange(change, value)
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        print(f"Polygon position: {self.pos()}")   
+
+
+
+# The rest of the code remains unchanged.
+
+
+class CustomGraphicsScene(QGraphicsScene):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setSceneRect(QRectF(0, 0, 2000, 2000))
+
+
+        self.addItem(self.add_star_polygon_item(1000,1000))
+        self.addItem(self.add_star_polygon_item(1000,1200))
+    def add_star_polygon_item(self, x, y, brush_color="blue", is_movable=True, is_selectable=True):
+        item = PolygonItems()
+        item.setPos(x, y)
+        item.setBrush(QBrush(QColor(brush_color)))
+        item.setFlag(QGraphicsItem.ItemIsMovable, is_movable)
+        item.setFlag(QGraphicsItem.ItemIsSelectable, is_selectable)
+        self.addItem(item)
+        return item
+class CustomGraphicsView(QGraphicsView):
+    def __init__(self, scene, parent=None):
+        super().__init__(scene, parent)
+        self.setRenderHint(QPainter.Antialiasing)
+        self.setOptimizationFlag(QGraphicsView.DontAdjustForAntialiasing, True)
+        self.setDragMode(QGraphicsView.RubberBandDrag)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.dragStartPosition = event.pos()
-        super(DraggablePolygon, self).mousePressEvent(event)
+            self.rubberBandRect = QRectF(event.pos(), QSizeF())
+            self.setRubberBandSelectionMode(Qt.IntersectsItemBoundingRect)
+            self.rubberBandRectItem = QGraphicsRectItem(self.rubberBandRect)
+            self.rubberBandRectItem.setPen(QPen(Qt.DashLine))
+            self.scene().addItem(self.rubberBandRectItem)
 
-    def mouseMoveEvent(self, event):
-        if not (event.buttons() & Qt.LeftButton):
+        elif event.button() == Qt.RightButton:
+            # Get the clicked item, if any
+            clicked_item = self.itemAt(event.pos())
+
+            # Check if the clicked item is a PolygonItems instance
+            if isinstance(clicked_item, PolygonItems):
+                self.show_context_menu(event)
             return
-        if (event.pos() - self.dragStartPosition).manhattanLength() < QApplication.startDragDistance():
-            return
 
-        drag = QDrag(self.scene().views()[0])
-        pixmap = QPixmap(self.boundingRect().size().toSize())
-        pixmap.fill(Qt.transparent)
-        painter = QPainter(pixmap)
-        painter.setRenderHint(QPainter.Antialiasing)
-        self.paint(painter, None, None)
-        painter.end()
-        drag.setPixmap(pixmap)
-        drag.setHotSpot(event.pos().toPoint())
+        super().mousePressEvent(event)
 
-        mime_data = QMimeData()
-        drag.setMimeData(mime_data)
-        drag.exec_(Qt.MoveAction)
+    def show_context_menu(self, event):
+        context_menu = QMenu()
+
+        # Set the context menu and QAction style
+        context_menu.setStyleSheet("""
+            QMenu {
+                background-color: rgba(255, 255, 255, 150);
+            }
+            QMenu::item {
+                background-color: transparent;
+                color: black;
+            }
+        """)
+
+        action_spawn_widget = QAction("Spawn Widget", context_menu)
+        context_menu.addAction(action_spawn_widget)
+        selected_action = context_menu.exec_(event.globalPos())
+
+        if selected_action == action_spawn_widget:
+            self.spawn_widget()
+
+
+    def spawn_widget(self):
+        dialog = QDialog()
+        dialog.setWindowTitle("Spawned Widget")
+
+        button = QPushButton("Click me!", dialog)
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(button)
+
+        def on_button_clicked():
+            print("hello")
+            dialog.accept()
+
+        button.clicked.connect(on_button_clicked)
+
+        dialog.exec_()
+class StarSpinBox(QSpinBox):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def stepBy(self, steps):
+        super().stepBy(steps)
+        print("hello")
+class MainWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.scene = CustomGraphicsScene()
+        self.view = CustomGraphicsView(self.scene)
+
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidget(self.view)
 
         
+        central_widget = QWidget()
+        layout = QVBoxLayout()
+        layout.addWidget(self.scroll_area)
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
+        self.setWindowTitle("Star Polygon Example")
+        #  attaching Star SpinBox to MainWindow
+        self.init_star_spinbox()
+        layout.addWidget(self.Star_spinBox)
 
-    def mouseReleaseEvent(self, event):
-        super(DraggablePolygon, self).mouseReleaseEvent(event)
-        if self.scene() and self.scene().views():
-            if self.scene().views()[0].parent() == self.scene().views()[0].parent().source_view:
-                self.scene().views()[0].parent().source_view.create_polygon()
+    def on_Star_spinBox_value_changed(self, value):
+        self.scene.star_item.set_num_points(value)
 
-class CustomGraphicsView(QGraphicsView):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setScene(QGraphicsScene(self))
-
-        self.setRenderHint(QPainter.Antialiasing)
-        self.setAcceptDrops(True)
-
-    def create_polygon(self):
-        polygon_points = [QPointF(-50, -50), QPointF(0, 50), QPointF(50, -50)]
-        polygon = QPolygonF(polygon_points)
-        self.polygon_item = DraggablePolygon(polygon)
-        self.scene().addItem(self.polygon_item)
-
-    def dragEnterEvent(self, event):
-        if event.source() != self:
-            event.acceptProposedAction()
-            if event.source() == self.parent().source_view:
-                event.source().create_polygon()
-    def dragMoveEvent(self, event):
-        if event.source() != self:
-            event.acceptProposedAction()
-
-    def dropEvent(self, event):
-        if event.source() != self:
-            event.acceptProposedAction()
-            event.source().scene().removeItem(event.source().polygon_item)
-            self.scene().addItem(event.source().polygon_item)
-            event.source().polygon_item.setPos(self.mapToScene(event.pos()) - event.source().polygon_item.boundingRect().center())
-
-
-class MainWindow(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        layout = QHBoxLayout(self)
-
-        self.source_view = CustomGraphicsView()
-        self.source_view.create_polygon()
-        layout.addWidget(self.source_view)
-
-        self.target_view = CustomGraphicsView()
-        layout.addWidget(self.target_view)
-
-def main():
-   
+    def init_star_spinbox(self):
+        self.Star_spinBox = QSpinBox()
+        self.Star_spinBox.setMinimum(3)
+        self.Star_spinBox.setMaximum(20)
+        self.Star_spinBox.setValue(5)
+        self.Star_spinBox.valueChanged.connect(self.on_Star_spinBox_value_changed)
+if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    main_widget = MainWindow()
-    main_widget.setWindowTitle('Drag and Drop Polygon Example')
-    main_widget.resize(800, 400)
-    main_widget.show()
+    main_window = MainWindow()
+    main_window.show()
 
     sys.exit(app.exec_())
-
-if __name__ == "__main__":
-    main()
-

@@ -3,7 +3,7 @@ import sys
 from math import sin, cos, pi
 from PySide2.QtWidgets import (QApplication, QGraphicsScene, QGraphicsView, QGraphicsPolygonItem, QGraphicsItem, QVBoxLayout, QWidget
                                 ,QStyleOptionGraphicsItem, QMainWindow, QScrollArea,QSpinBox,QGraphicsRectItem,QStyle
-                                ,QMenu,QDialog,QPushButton)
+                                ,QMenu,QDialog,QPushButton,QAction )
 from PySide2.QtCore import QPointF, QRectF, Qt,QRectF,QSizeF,QPoint
 from PySide2.QtGui import QPolygonF, QBrush, QColor, QPainter, QPen
 
@@ -116,11 +116,25 @@ class CustomGraphicsView(QGraphicsView):
 
     def show_context_menu(self, event):
         context_menu = QMenu()
-        action = context_menu.addAction("Spawn Widget")
+
+        # Set the context menu and QAction style
+        context_menu.setStyleSheet("""
+            QMenu {
+                background-color: rgba(255, 255, 255, 150);
+            }
+            QMenu::item {
+                background-color: transparent;
+                color: black;
+            }
+        """)
+
+        action_spawn_widget = QAction("Spawn Widget", context_menu)
+        context_menu.addAction(action_spawn_widget)
         selected_action = context_menu.exec_(event.globalPos())
 
-        if selected_action == action:
+        if selected_action == action_spawn_widget:
             self.spawn_widget()
+
 
     def spawn_widget(self):
         dialog = QDialog()
