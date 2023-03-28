@@ -2,12 +2,12 @@
 import sys
 from math import sin, cos, pi
 from PySide2.QtWidgets import (QApplication, QGraphicsScene, QGraphicsView, QGraphicsPolygonItem, QGraphicsItem, QVBoxLayout, QWidget
-                                ,QSlider, QMainWindow, QScrollArea,QSpinBox,QGraphicsRectItem)
+                                ,QStyleOptionGraphicsItem, QMainWindow, QScrollArea,QSpinBox,QGraphicsRectItem,QStyle)
 from PySide2.QtCore import QPointF, QRectF, Qt,QRectF,QSizeF
 from PySide2.QtGui import QPolygonF, QBrush, QColor, QPainter, QPen
 
 
-class StarPolygonItem(QGraphicsPolygonItem):
+class PolygonItems(QGraphicsPolygonItem):
     def __init__(self, num_points=5, radius=50):
         self.num_points = num_points
         self.radius = radius
@@ -27,13 +27,17 @@ class StarPolygonItem(QGraphicsPolygonItem):
             y = self.radius * factor * sin(angle)
             star_polygon.append(QPointF(x, y))
         self.setPolygon(star_polygon)
-
+  
     def set_num_points(self, num_points):
         self.num_points = num_points
         self.update_polygon()
 
     def paint(self, painter, option, widget=None):
-        super().paint(painter, option, widget)
+        # Create a new QStyleOptionGraphicsItem without the QStyle.State_Selected flag
+        no_selection_option = QStyleOptionGraphicsItem(option)
+        no_selection_option.state &= ~QStyle.State_Selected
+
+        super().paint(painter, no_selection_option, widget)
         painter.setRenderHint(QPainter.Antialiasing)
         pen = QPen(self.edge_color)
         pen.setWidth(2)
@@ -76,7 +80,7 @@ class CustomGraphicsScene(QGraphicsScene):
         self.addItem(self.add_star_polygon_item(1000,1000))
         self.addItem(self.add_star_polygon_item(1000,1200))
     def add_star_polygon_item(self, x, y, brush_color="blue", is_movable=True, is_selectable=True):
-        item = StarPolygonItem()
+        item = PolygonItems()
         item.setPos(x, y)
         item.setBrush(QBrush(QColor(brush_color)))
         item.setFlag(QGraphicsItem.ItemIsMovable, is_movable)
