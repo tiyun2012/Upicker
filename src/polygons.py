@@ -2,8 +2,9 @@
 import sys
 from math import sin, cos, pi
 from PySide2.QtWidgets import (QApplication, QGraphicsScene, QGraphicsView, QGraphicsPolygonItem, QGraphicsItem, QVBoxLayout, QWidget
-                                ,QStyleOptionGraphicsItem, QMainWindow, QScrollArea,QSpinBox,QGraphicsRectItem,QStyle)
-from PySide2.QtCore import QPointF, QRectF, Qt,QRectF,QSizeF
+                                ,QStyleOptionGraphicsItem, QMainWindow, QScrollArea,QSpinBox,QGraphicsRectItem,QStyle
+                                ,QMenu,QDialog,QPushButton)
+from PySide2.QtCore import QPointF, QRectF, Qt,QRectF,QSizeF,QPoint
 from PySide2.QtGui import QPolygonF, QBrush, QColor, QPainter, QPen
 
 
@@ -101,9 +102,41 @@ class CustomGraphicsView(QGraphicsView):
             self.rubberBandRectItem = QGraphicsRectItem(self.rubberBandRect)
             self.rubberBandRectItem.setPen(QPen(Qt.DashLine))
             self.scene().addItem(self.rubberBandRectItem)
+
+        elif event.button() == Qt.RightButton:
+            # Get the clicked item, if any
+            clicked_item = self.itemAt(event.pos())
+
+            # Check if the clicked item is a PolygonItems instance
+            if isinstance(clicked_item, PolygonItems):
+                self.show_context_menu(event)
+            return
+
         super().mousePressEvent(event)
 
+    def show_context_menu(self, event):
+        context_menu = QMenu()
+        action = context_menu.addAction("Spawn Widget")
+        selected_action = context_menu.exec_(event.globalPos())
 
+        if selected_action == action:
+            self.spawn_widget()
+
+    def spawn_widget(self):
+        dialog = QDialog()
+        dialog.setWindowTitle("Spawned Widget")
+
+        button = QPushButton("Click me!", dialog)
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(button)
+
+        def on_button_clicked():
+            print("hello")
+            dialog.accept()
+
+        button.clicked.connect(on_button_clicked)
+
+        dialog.exec_()
 class StarSpinBox(QSpinBox):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
