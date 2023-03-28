@@ -50,7 +50,7 @@ class DraggablePolygon(QGraphicsItem):
             if self.scene().views()[0].parent() == self.scene().views()[0].parent().source_view:
                 self.scene().views()[0].parent().source_view.create_polygon()
 
-class PolygonView(QGraphicsView):
+class CustomGraphicsView(QGraphicsView):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setScene(QGraphicsScene(self))
@@ -87,11 +87,11 @@ class MainWindow(QWidget):
 
         layout = QHBoxLayout(self)
 
-        self.source_view = PolygonView()
+        self.source_view = CustomGraphicsView()
         self.source_view.create_polygon()
         layout.addWidget(self.source_view)
 
-        self.target_view = PolygonView()
+        self.target_view = CustomGraphicsView()
         layout.addWidget(self.target_view)
 
 def main():
