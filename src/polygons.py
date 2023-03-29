@@ -95,6 +95,8 @@ class CustomGraphicsView(QGraphicsView):
         self.setOptimizationFlag(QGraphicsView.DontAdjustForAntialiasing, True)
         self.setDragMode(QGraphicsView.RubberBandDrag)
 
+        self.setBackgroundBrush(QBrush(QColor(64, 64, 64)))
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.rubberBandRect = QRectF(event.pos(), QSizeF())
@@ -120,7 +122,7 @@ class CustomGraphicsView(QGraphicsView):
         # Set the context menu and QAction style
         context_menu.setStyleSheet("""
             QMenu {
-                background-color: rgba(255, 255, 255, 150);
+                background-color: rgba(255, 255, 255, 255);
             }
             QMenu::item {
                 background-color: transparent;
@@ -130,12 +132,18 @@ class CustomGraphicsView(QGraphicsView):
 
         action_spawn_widget = QAction("Spawn Widget", context_menu)
         context_menu.addAction(action_spawn_widget)
-        selected_action = context_menu.exec_(event.globalPos())
+
+        clicked_item = self.itemAt(event.pos())
+        item_scene_pos = clicked_item.scenePos()
+        item_view_pos = self.mapFromScene(item_scene_pos)
+
+        # Add 30-pixel offset to the right
+        offset = QPoint(0, 80)
+        menu_position = item_view_pos + offset
+        selected_action = context_menu.exec_(self.viewport().mapToGlobal(menu_position))
 
         if selected_action == action_spawn_widget:
             self.spawn_widget()
-
-
     def spawn_widget(self):
         dialog = QDialog()
         dialog.setWindowTitle("Spawned Widget")
