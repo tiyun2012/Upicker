@@ -47,11 +47,13 @@ class CustomGraphicsView(QGraphicsView):
         # Set up the scene
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
-        self.scene.setSceneRect(0, 0, 10000, 10000)
+        self.scene.setSceneRect(0, 0, 2000, 2000)
         self.grid_item = Grid(1000, 1000, 50, grid_color=self.grid_color)
+        self.grid_item.setPos(QPoint(500,500))
         self.scene.addItem(self.grid_item)
 
-        self.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        # Remove the alignment line
+        # self.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.setBackgroundBrush(QColor(self.background_color))
 
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
@@ -86,7 +88,18 @@ class CustomGraphicsView(QGraphicsView):
             event.accept()
         else:
             super().mousePressEvent(event)
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_F:
+            # # Reset zoom level
+            # current_transform = self.transform()
+            # self.setTransform(current_transform.inverted()[0])
+            self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+            # self.scale(1, 1)
+            print(self.resetTransform())
 
+            event.accept()
+        else:
+            super().keyPressEvent(event)
 
     def mouseMoveEvent(self, event):
         if self._pan:
