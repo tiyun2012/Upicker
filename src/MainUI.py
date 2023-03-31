@@ -55,6 +55,7 @@ class MainWindow(QMainWindow):
 
         # Create a QTabWidget
         self.tab_widget = CustomTabWidget(self)
+        self.tab_widget_height=self.tab_widget.height()
         self.tab_widget.setTabPosition(QTabWidget.East)  # Set tab position to the right side
         self.tab_widget.setMinimumWidth(35)  # Set minimum width to keep the tab border visible
         self.tab_widget.sizeHint()
@@ -116,11 +117,13 @@ class MainWindow(QMainWindow):
         current_width = self.centralWidget().findChild(QTabWidget).width()
         graphics_view.setMaximumWidth(max_width)
         self.tab_widget.setMaximumWidth(self.width() - graphics_view.width())
+        self.tab_widget.setMinimumSize(40, 0)
 
     def on_tab_clicked(self, index):
         # self.centralWidget().findChild(QGraphicsView).setMaximumWidth(self.width() - 200)
         # self.tab_widget.setFixedWidth(200)
-        print('change tab')
+        self.tab_widget.setMinimumSize(200, 0)
+        print('hei: {}'.format(self.tab_widget_height))
     def on_tab_hovered(self, index):
         # self.centralWidget().findChild(QGraphicsView).setMaximumWidth(self.width() - 200)
         # self.tab_widget.setFixedWidth(200)
