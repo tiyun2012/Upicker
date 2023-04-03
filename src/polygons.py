@@ -88,6 +88,8 @@ class CustomGraphicsScene(QGraphicsScene):
         item.setFlag(QGraphicsItem.ItemIsSelectable, is_selectable)
         self.addItem(item)
         return item
+
+
 class CustomGraphicsView(QGraphicsView):
     def __init__(self, scene, parent=None):
         super().__init__(scene, parent)
@@ -117,7 +119,7 @@ class CustomGraphicsView(QGraphicsView):
         super().mousePressEvent(event)
 
     def show_context_menu(self, event):
-        context_menu = QMenu()
+        context_menu =QMenu()
 
         # Set the context menu and QAction style
         context_menu.setStyleSheet("""
