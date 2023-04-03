@@ -1,7 +1,7 @@
-import sys
-from PySide2.QtCore import Qt, QPointF,QPoint
-from PySide2.QtGui import QPen, QColor, QPainterPath, QPainter
-from PySide2.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QGraphicsPathItem
+# import sys
+# from PySide2.QtCore import Qt, QPointF,QPoint
+# from PySide2.QtGui import QPen, QColor, QPainterPath, QPainter
+# from PySide2.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QGraphicsPathItem
 
 
 import sys
@@ -88,19 +88,6 @@ class CustomGraphicsView(QGraphicsView):
             event.accept()
         else:
             super().mousePressEvent(event)
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_F:
-            # # Reset zoom level
-            # current_transform = self.transform()
-            # self.setTransform(current_transform.inverted()[0])
-            self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
-            # self.scale(1, 1)
-            print(self.resetTransform())
-
-            event.accept()
-        else:
-            super().keyPressEvent(event)
-
     def mouseMoveEvent(self, event):
         if self._pan:
             delta = self.mapToScene(event.pos()) - self.mapToScene(self.pan_start)
@@ -118,8 +105,28 @@ class CustomGraphicsView(QGraphicsView):
             event.accept()
         else:
             super().mouseReleaseEvent(event)
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Shift:
+            self.shift_pressed = True
+        elif event.key() == Qt.Key_F:
+            self.f_pressed = True
+
+        if self.shift_pressed and self.f_pressed:
+            self.resetTransform()
+            event.accept()
+        else:
+            super().keyPressEvent(event)
+    def keyReleaseEvent(self, event):
+        if event.key() == Qt.Key_Shift:
+            self.shift_pressed = False
+        elif event.key() == Qt.Key_F:
+            self.f_pressed = False
+
+        super().keyReleaseEvent(event)
 if __name__ == '__main__':
     app = QApplication([])
     view = CustomGraphicsView(background_color=QColor(0, 0, 0), grid_color=QColor(230, 230, 230))
     view.show()
     sys.exit(app.exec_())
+
+

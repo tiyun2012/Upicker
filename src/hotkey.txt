@@ -1,0 +1,2 @@
+F: focus to selected item
+F+shift: refactor to default
