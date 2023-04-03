@@ -100,6 +100,7 @@ class CustomGraphicsView(QGraphicsView):
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.RightButton:
+            self.setDragMode(QGraphicsView.NoDrag)
             self._pan = False
             self.setCursor(Qt.ArrowCursor)
             event.accept()
@@ -116,13 +117,7 @@ class CustomGraphicsView(QGraphicsView):
             event.accept()
         else:
             super().keyPressEvent(event)
-    def keyReleaseEvent(self, event):
-        if event.key() == Qt.Key_Shift:
-            self.shift_pressed = False
-        elif event.key() == Qt.Key_F:
-            self.f_pressed = False
 
-        super().keyReleaseEvent(event)
 if __name__ == '__main__':
     app = QApplication([])
     view = CustomGraphicsView(background_color=QColor(0, 0, 0), grid_color=QColor(230, 230, 230))
