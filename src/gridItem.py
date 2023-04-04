@@ -7,7 +7,8 @@
 import sys
 from PySide2.QtCore import Qt, QPointF, QPoint
 from PySide2.QtGui import QPen, QColor, QPainterPath, QPainter
-from PySide2.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QGraphicsPathItem, QMainWindow, QVBoxLayout, QWidget
+from PySide2.QtWidgets import (QApplication, QGraphicsScene, QGraphicsView, QGraphicsPathItem,
+                                 QMainWindow,QColorDialog,QSpinBox, QLabel,QPushButton, QHBoxLayout, QVBoxLayout, QWidget)
 
 
 class Grid(QGraphicsPathItem):
@@ -70,6 +71,8 @@ class CustomGraphicsView(QGraphicsView):
 
         self._pan = False
         self.pan_start = QPoint(100, 100)
+        self.shift_pressed=False 
+        self.f_pressed=False
 
     def wheelEvent(self, event):
         zoom_factor = 1.15
@@ -117,11 +120,72 @@ class CustomGraphicsView(QGraphicsView):
             event.accept()
         else:
             super().keyPressEvent(event)
+        
+    def keyReleaseEvent(self, event):
+        self.shift_pressed=False
+        self.f_pressed=False
+        event.accept()
+
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        # Create and set up the view
+        self.view = CustomGraphicsView(background_color=QColor(0, 0, 0), grid_color=QColor(230, 230, 230))
+
+        # Create the button
+        self.grid_toggle_button = QPushButton("Toggle Grid")
+        self.grid_toggle_button.clicked.connect(self.toggle_grid)
+
+        # Create the spinbox and label
+        self.grid_thickness_label = QLabel("Grid Thickness:")
+        self.grid_thickness_spinbox = QSpinBox()
+        self.grid_thickness_spinbox.setRange(1, 10)  # Set the desired range of values for grid thickness
+        self.grid_thickness_spinbox.setValue(1)  # Set the initial value
+        self.grid_thickness_spinbox.valueChanged.connect(self.update_grid_thickness)
+
+        # Create the change color button
+        self.change_color_button = QPushButton("Change Grid Color")
+        self.change_color_button.clicked.connect(self.change_grid_color)
+
+        # Create layout and add widgets
+        layout = QVBoxLayout()
+        top_layout = QHBoxLayout()
+        top_layout.addWidget(self.grid_toggle_button)
+        top_layout.addWidget(self.grid_thickness_label)
+        top_layout.addWidget(self.grid_thickness_spinbox)
+        top_layout.addWidget(self.change_color_button)
+        layout.addLayout(top_layout)
+        layout.addWidget(self.view)
+
+        container = QWidget()
+        container.setLayout(layout)
+        self.setCentralWidget(container)
+
+    def toggle_grid(self):
+        if self.view.grid_item.isVisible():
+            self.view.grid_item.hide()
+        else:
+            self.view.grid_item.show()
+
+    def update_grid_thickness(self, value):
+        pen = self.view.grid_item.pen()
+        pen.setWidth(value)
+        self.view.grid_item.setPen(pen)
+
+    def change_grid_color(self):
+        color = QColorDialog.getColor(self.view.grid_item.pen().color(), self, "Select Grid Color")
+        if color.isValid():
+            pen = self.view.grid_item.pen()
+            pen.setColor(color)
+            self.view.grid_item.setPen(pen)
+
+
+
 
 if __name__ == '__main__':
     app = QApplication([])
-    view = CustomGraphicsView(background_color=QColor(0, 0, 0), grid_color=QColor(230, 230, 230))
-    view.show()
+    main_window = MainWindow()
+    main_window.show()
     sys.exit(app.exec_())
-
-
